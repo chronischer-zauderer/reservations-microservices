@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { BrowserRouter } from "react-router-dom"
-import FacilityForm from "../pages/FacilityForm"
+import FacilityForm from "../views/FacilityForm"
 
 const mockNavigate = vi.fn()
 

@@ -2,12 +2,12 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { Toaster } from "sonner"
-import Navbar from "../src/components/Navbar"
-import Home from "../src/pages/Home"
-import Facilities from "../src/pages/Facilities"
-import FacilityForm from "../src/pages/FacilityForm"
-import Bookings from "../src/pages/Bookings"
-import BookingForm from "../src/pages/BookingForm"
+import Navbar from "../components/Navbar"
+import Home from "../views/Home"
+import Facilities from "../views/Facilities"
+import FacilityForm from "../views/FacilityForm"
+import Bookings from "../views/Bookings"
+import BookingForm from "../views/BookingForm"
 
 export default function Page() {
   return (

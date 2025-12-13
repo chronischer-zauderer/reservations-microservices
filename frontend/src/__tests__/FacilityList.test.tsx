@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import { BrowserRouter } from "react-router-dom"
-import Facilities from "../pages/Facilities"
+import Facilities from "../views/Facilities"
 import * as facilitiesApi from "../api/facilities"
 
 // Mock the API module
