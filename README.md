@@ -1,4 +1,4 @@
-# Reservations Microservices
+                                                                                                                                                                # Reservations Microservices
 
 Proyecto de ejemplo: sistema de reservas construido con microservicios Spring Boot, MySQL y un API Gateway estático (nginx) que además sirve una SPA React mínima.
 
