@@ -1,45 +1,158 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Reservations - Demo UI</title>
-  <style>body{font-family:Arial;max-width:900px;margin:2rem auto;padding:1rem}label{display:block;margin-top:.5rem}</style>
-</head>
-<body>
-  <h1>Facilities</h1>
-  <div id="list"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reservations - React UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      :root{
+        --bg:#0f172a; --card:#0b1220; --accent:#06b6d4; --muted:#94a3b8; --surface:#071024;
+      }
+      html,body{height:100%;}
+      body{font-family:Inter,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#071428 0%, #081125 100%);color:#e6eef8;max-width:1100px;margin:1.5rem auto;padding:1.4rem}
+      header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+      header h1{font-size:1.6rem;margin:0}
+      nav button{margin-right:.5rem;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:.5rem .7rem;border-radius:8px;cursor:pointer}
+  nav button.active{background:linear-gradient(90deg,var(--accent),#7c3aed);color:#021426;box-shadow:0 6px 18px rgba(12,74,92,.12);}
+      .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.75rem}
+      .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:1rem;border-radius:10px}
+      form label{display:block;margin:.4rem 0;color:var(--muted)}
+      input,select{width:100%;padding:.5rem;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
+      button.primary{background:linear-gradient(90deg,var(--accent),#7c3aed);color:#021426;border:none;padding:.5rem .9rem;border-radius:8px;cursor:pointer}
+      .small{font-size:.85rem;color:var(--muted)}
+      .muted{color:var(--muted)}
+      .controls{display:flex;gap:.5rem;align-items:center}
+  .toast{position:fixed;right:1rem;bottom:1rem;background:linear-gradient(90deg,var(--accent),#7c3aed);color:#021426;padding:.6rem 1rem;border-radius:10px;box-shadow:0 12px 40px rgba(12,18,30,.6);display:none;transform:translateY(20px);transition:all .28s cubic-bezier(.2,.9,.2,1)}
+  .toast.show{display:block;transform:translateY(0);}
+  /* modal */
+  .modal-backdrop{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.6),rgba(2,6,23,.85));display:flex;align-items:center;justify-content:center;z-index:60}
+  .modal{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:1rem;border-radius:12px;min-width:320px;max-width:720px;box-shadow:0 20px 60px rgba(2,6,23,.6)}
+  .modal h3{margin:0 0 .5rem 0}
+  .muted-ghost{color:rgba(255,255,255,0.6)}
+  .icon-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:.4rem;border-radius:8px}
+  .icon-btn:hover{background:rgba(255,255,255,0.02)}
+      .loading{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.12);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+      @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
+    <!-- React + ReactDOM UMD -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  </head>
+  <body>
+    <div id="root">Cargando...</div>
 
-  <h2>Añadir facility</h2>
-  <form id="form">
-    <label>Nombre <input id="name" required></label>
-    <label>Descripción <input id="description"></label>
-    <label>Capacidad <input id="capacity" type="number" value="5"></label>
-    <button type="submit">Crear</button>
-  </form>
+    <script>
+      const e = React.createElement;
 
-  <script>
-    const api = (p, opts) => fetch(`/api/${p}`, opts).then(r=>r.json().catch(()=>null));
-    async function refresh(){
-      const data = await api('facilities');
-      const list = document.getElementById('list');
-      list.innerHTML = '';
-      if(!data || !data.length) { list.innerHTML = '<i>No hay facilities</i>'; return }
-      data.forEach(f=>{
-        const el = document.createElement('div');
-        el.innerHTML = `<b>${f.name}</b> (${f.capacity}) — ${f.description}`;
-        list.appendChild(el);
-      })
-    }
-    document.getElementById('form').addEventListener('submit', async e=>{
-      e.preventDefault();
-      const name = document.getElementById('name').value;
-      const description = document.getElementById('description').value;
-      const capacity = parseInt(document.getElementById('capacity').value||'0',10);
-      await fetch('/api/facilities', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,description,capacity})});
-      document.getElementById('form').reset();
-      refresh();
-    });
-    refresh();
-  </script>
-</body>
+      const api = async (path, opts) => {
+        const res = await fetch('/api/' + path, opts);
+        const text = await res.text();
+        try { return JSON.parse(text); } catch (err) { return text; }
+      };
+
+      // small UI helpers
+      function showToast(msg, timeout=2800){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', timeout); }
+
+      function App(){
+        const [tab,setTab] = React.useState('facilities');
+        return e('div',null,
+          e('header',null,
+            e('h1',null,'Reservations'),
+            e('div',null,
+              e('button',{onClick:()=>setTab('facilities'),className: tab==='facilities'?'active':''},'Facilities'),
+              e('button',{onClick:()=>setTab('users'),className: tab==='users'?'active':''},'Users'),
+              e('button',{onClick:()=>setTab('bookings'),className: tab==='bookings'?'active':''},'Bookings')
+            )
+          ),
+          tab === 'facilities' ? e(Facilities) : null,
+          tab === 'users' ? e(Users) : null,
+          tab === 'bookings' ? e(Bookings) : null,
+          e('div',{id:'toast',className:'toast'})
+        );
+      }
+
+      function Facilities(){
+        const [list,setList] = React.useState([]);
+        const [loading,setLoading] = React.useState(false);
+        const [form, setForm] = React.useState({name:'',description:'',capacity:5});
+        React.useEffect(()=>{refresh();},[]);
+        async function refresh(){ setLoading(true); try{ setList(await api('facilities')); }catch(e){ showToast('Error cargando facilities'); } finally{ setLoading(false); } }
+        async function create(even){
+          even.preventDefault(); setLoading(true);
+          try{ await api('facilities', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); showToast('Facility creada'); setForm({name:'',description:'',capacity:5}); await refresh(); }
+          catch(e){ showToast('Error creando facility'); }
+          finally{ setLoading(false); }
+        }
+
+        async function remove(id){ if(!confirm('Eliminar facility?')) return; setLoading(true); try{ await fetch('/api/facilities/'+id,{method:'DELETE'}); showToast('Eliminado'); await refresh(); }catch(e){ showToast('Error eliminando'); } finally{ setLoading(false); } }
+
+        async function edit(f){ const name=prompt('Nombre', f.name); if(name==null) return; const desc=prompt('Descripción', f.description); if(desc==null) return; const cap = prompt('Capacidad', f.capacity); if(cap==null) return; setLoading(true); try{ await fetch('/api/facilities/'+f.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,description:desc,capacity:parseInt(cap,10)})}); showToast('Actualizado'); await refresh(); }catch(e){ showToast('Error actualizando'); } finally{ setLoading(false); } }
+
+        return e('section',null,
+          e('div',{className:'controls'}, e('h2',null,'Facilities'), loading?e('div',{className:'loading'}):null),
+          e('div',{className:'grid'}, list && list.length ? list.map(f=>e('div',{key:f.id,className:'card'},
+            e('div',null,e('b',null,f.name)), e('div',{className:'small'},`${f.capacity} seats`), e('div',null,f.description),
+            e('div',{style:{marginTop:'8px',display:'flex',gap:'8px'}},
+              e('button',{onClick:()=>edit(f),className:'small'},'Editar'),
+              e('button',{onClick:()=>remove(f.id),className:'small'},'Eliminar')
+            )
+          )) : e('div',null,'No facilities')),
+          e('h3',null,'Create facility'),
+          e('form',{onSubmit:create,className:'card'},
+            e('label',null,'Name', e('input',{value:form.name,onChange:ev=>setForm({...form,name:ev.target.value}),required:true})),
+            e('label',null,'Description', e('input',{value:form.description,onChange:ev=>setForm({...form,description:ev.target.value})})),
+            e('label',null,'Capacity', e('input',{type:'number',value:form.capacity,onChange:ev=>setForm({...form,capacity:parseInt(ev.target.value||'0',10)})})),
+            e('div',null,e('button',{type:'submit',className:'primary'},'Create'))
+          )
+        );
+      }
+
+      function Users(){
+        const [users,setUsers] = React.useState([]);
+        const [loading,setLoading] = React.useState(false);
+        const [form,setForm] = React.useState({username:'',password:''});
+        React.useEffect(()=>{refresh();},[]);
+        async function refresh(){ setLoading(true); try{ setUsers(await api('auth/users')); }catch(e){ showToast('Error cargando users'); } finally{ setLoading(false); } }
+        async function register(e){ e.preventDefault(); setLoading(true); try{ await api('auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); setForm({username:'',password:''}); showToast('Usuario creado'); await refresh(); }catch(e){ showToast('Error creando user'); } finally{ setLoading(false); } }
+        async function remove(id){ if(!confirm('Eliminar user?')) return; setLoading(true); try{ await fetch('/api/auth/users/'+id,{method:'DELETE'}); showToast('Usuario eliminado'); await refresh(); }catch(e){ showToast('Error eliminando'); } finally{ setLoading(false); } }
+        return e('section',null,
+          e('div',{className:'controls'}, e('h2',null,'Users'), loading?e('div',{className:'loading'}):null),
+          e('div',{className:'grid'}, users && users.length ? users.map(u=>e('div',{key:u.id,className:'card'}, `${u.id} — ${u.username}`, e('div',{style:{marginTop:'8px'}}, e('button',{onClick:()=>remove(u.id),'className':'small'},'Eliminar')))) : e('div',null,'No users')),
+          e('h3',null,'Register'),
+          e('form',{onSubmit:register,className:'card'},
+            e('label',null,'Username', e('input',{value:form.username,onChange:ev=>setForm({...form,username:ev.target.value}),required:true})),
+            e('label',null,'Password', e('input',{type:'password',value:form.password,onChange:ev=>setForm({...form,password:ev.target.value}),required:true})),
+            e('div',null,e('button',{type:'submit',className:'primary'},'Register'))
+          )
+        );
+      }
+
+      function Bookings(){
+        const [fac,setFac]=React.useState([]);
+        const [users,setUsers]=React.useState([]);
+        const [bookings,setBookings]=React.useState([]);
+        const [loading,setLoading]=React.useState(false);
+        const [form,setForm]=React.useState({facilityId:'',userId:'',startTime:'',endTime:''});
+        React.useEffect(()=>{load();},[]);
+        async function load(){ setLoading(true); try{ setFac(await api('facilities')); setUsers(await api('auth/users')); setBookings(await api('bookings')); }catch(e){ showToast('Error cargando bookings'); } finally{ setLoading(false); } }
+        async function create(e){ e.preventDefault(); setLoading(true); try{ await api('bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({facilityId:parseInt(form.facilityId,10),userId:parseInt(form.userId,10),startTime:form.startTime,endTime:form.endTime})}); showToast('Booking creado'); setForm({facilityId:'',userId:'',startTime:'',endTime:''}); await load(); }catch(e){ showToast('Error creando booking'); } finally{ setLoading(false); } }
+        async function remove(id){ if(!confirm('Eliminar booking?')) return; setLoading(true); try{ await fetch('/api/bookings/'+id,{method:'DELETE'}); showToast('Booking eliminado'); await load(); }catch(e){ showToast('Error eliminando booking'); } finally{ setLoading(false); } }
+        return e('section',null,
+          e('div',{className:'controls'}, e('h2',null,'Bookings'), loading?e('div',{className:'loading'}):null),
+          e('div',{className:'grid'}, bookings && bookings.length ? bookings.map(b=>e('div',{key:b.id,className:'card'}, `#${b.id} facility:${b.facilityId} user:${b.userId} ${b.startTime} → ${b.endTime}`, e('div',{style:{marginTop:'8px'}}, e('button',{onClick:()=>remove(b.id),'className':'small'},'Eliminar')))) : e('div',null,'No bookings')),
+          e('h3',null,'Create booking'),
+          e('form',{onSubmit:create,className:'card'},
+            e('label',null,'Facility', e('select',{value:form.facilityId,onChange:ev=>setForm({...form,facilityId:ev.target.value})}, fac.map(f=>e('option',{key:f.id,value:f.id},f.name)))),
+            e('label',null,'User', e('select',{value:form.userId,onChange:ev=>setForm({...form,userId:ev.target.value})}, users.map(u=>e('option',{key:u.id,value:u.id},u.username)))),
+            e('label',null,'Start', e('input',{type:'datetime-local',value:form.startTime,onChange:ev=>setForm({...form,startTime:ev.target.value})})),
+            e('label',null,'End', e('input',{type:'datetime-local',value:form.endTime,onChange:ev=>setForm({...form,endTime:ev.target.value})})),
+            e('div',null,e('button',{type:'submit',className:'primary'},'Book'))
+          )
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+    </script>
+  </body>
 </html>

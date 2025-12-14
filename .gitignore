@@ -1,0 +1,50 @@
+# Java / Maven
+/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven wrapper cache
+.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+
+# Node / frontend
+node_modules/
+dist/
+.next/
+build/
+/.parcel-cache/
+
+# Logs
+*.log
+logs/
+
+# Env
+.env
+.env.local
+.env.*
+
+# Docker
+docker-compose.override.yml
+docker-compose.*.yml
+docker-compose.*.local.yml
+
+# Database local volume / runtime artifacts
+/db_data/
+
+# Test outputs / integration outputs (include or ignore as you prefer)
+# integration_outputs/
+
+# Java build artifact folders and IDE project files
+/target/
+/out/
