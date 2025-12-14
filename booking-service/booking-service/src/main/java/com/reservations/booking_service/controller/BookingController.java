@@ -1,7 +1,9 @@
 package com.reservations.booking_service.controller;
 
 import com.reservations.booking_service.model.Booking;
-import com.reservations.booking_service.repository.BookingRepository;
+import com.reservations.booking_service.service.BookingService;
+import com.reservations.booking_service.dto.BookingRequest;
+import com.reservations.booking_service.dto.BookingResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,36 +13,57 @@ import java.util.List;
 @RequestMapping("/api/bookings")
 public class BookingController {
 
-    private final BookingRepository repo;
+    private final BookingService service;
 
-    public BookingController(BookingRepository repo) { this.repo = repo; }
+    public BookingController(BookingService service) { this.service = service; }
 
     @GetMapping
-    public List<Booking> all() { return repo.findAll(); }
+    public List<BookingResponse> all() {
+        return service.findAll().stream().map(this::toResponse).toList();
+    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Booking> get(@PathVariable Long id) {
-        return repo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BookingResponse> get(@PathVariable Long id) {
+        return service.findById(id).map(b -> ResponseEntity.ok(toResponse(b))).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Booking create(@RequestBody Booking b) { return repo.save(b); }
+    public BookingResponse create(@RequestBody BookingRequest req) {
+        Booking b = new Booking();
+        b.setFacilityId(req.getFacilityId());
+        b.setUserId(req.getUserId());
+        b.setStartTime(req.getStartTime());
+        b.setEndTime(req.getEndTime());
+        Booking saved = service.save(b);
+        return toResponse(saved);
+    }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Booking> update(@PathVariable Long id, @RequestBody Booking b) {
-        return repo.findById(id).map(existing -> {
-            existing.setFacilityId(b.getFacilityId());
-            existing.setUserId(b.getUserId());
-            existing.setStartTime(b.getStartTime());
-            existing.setEndTime(b.getEndTime());
-            return ResponseEntity.ok(repo.save(existing));
+    public ResponseEntity<BookingResponse> update(@PathVariable Long id, @RequestBody BookingRequest req) {
+        return service.findById(id).map(existing -> {
+            existing.setFacilityId(req.getFacilityId());
+            existing.setUserId(req.getUserId());
+            existing.setStartTime(req.getStartTime());
+            existing.setEndTime(req.getEndTime());
+            Booking saved = service.save(existing);
+            return ResponseEntity.ok(toResponse(saved));
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!repo.existsById(id)) return ResponseEntity.notFound().build();
-        repo.deleteById(id);
+        if (!service.existsById(id)) return ResponseEntity.notFound().build();
+        service.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private BookingResponse toResponse(Booking b) {
+        BookingResponse r = new BookingResponse();
+        r.setId(b.getId());
+        r.setFacilityId(b.getFacilityId());
+        r.setUserId(b.getUserId());
+        r.setStartTime(b.getStartTime());
+        r.setEndTime(b.getEndTime());
+        return r;
     }
 }

@@ -1,0 +1,20 @@
+[
+  {
+    "capacity": 20,
+    "description": "Sala principal de reuniones",
+    "id": 1,
+    "name": "Sala A"
+  },
+  {
+    "capacity": 8,
+    "description": "Sala secundaria",
+    "id": 2,
+    "name": "Sala B"
+  },
+  {
+    "capacity": 5,
+    "description": "Creada por script",
+    "id": 4,
+    "name": "Sala Test"
+  }
+]

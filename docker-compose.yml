@@ -66,13 +66,10 @@ services:
       - booking-service
     volumes:
       - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./gateway/static:/usr/share/nginx/html:ro
+      - ./gateway/wait-and-run.sh:/usr/local/bin/wait-and-run.sh:ro
+    command: ["sh", "-c", "/usr/local/bin/wait-and-run.sh"]
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - gateway
 
 volumes:
   db_data:

@@ -13,33 +13,34 @@ import java.util.List;
 @RequestMapping("/api/equipment")
 public class EquipmentController {
 
-    private final EquipmentRepository eqRepo;
-    private final FacilityRepository facilityRepo;
+    private final com.reservations.facility_service.service.EquipmentService eqService;
+    private final com.reservations.facility_service.service.FacilityService facilityService;
 
-    public EquipmentController(EquipmentRepository eqRepo, FacilityRepository facilityRepo) {
-        this.eqRepo = eqRepo;
-        this.facilityRepo = facilityRepo;
+    public EquipmentController(com.reservations.facility_service.service.EquipmentService eqService,
+                               com.reservations.facility_service.service.FacilityService facilityService) {
+        this.eqService = eqService;
+        this.facilityService = facilityService;
     }
 
     @GetMapping
-    public List<Equipment> all() { return eqRepo.findAll(); }
+    public List<Equipment> all() { return eqService.findAll(); }
 
     @GetMapping("/facility/{facilityId}")
-    public List<Equipment> byFacility(@PathVariable Long facilityId) { return eqRepo.findByFacilityId(facilityId); }
+    public List<Equipment> byFacility(@PathVariable Long facilityId) { return eqService.findByFacilityId(facilityId); }
 
     @PostMapping
     public ResponseEntity<Equipment> create(@RequestBody Equipment eq) {
         if (eq.getFacility() != null && eq.getFacility().getId() != null) {
-            Facility f = facilityRepo.findById(eq.getFacility().getId()).orElse(null);
+            Facility f = facilityService.findById(eq.getFacility().getId()).orElse(null);
             eq.setFacility(f);
         }
-        return ResponseEntity.ok(eqRepo.save(eq));
+        return ResponseEntity.ok(eqService.save(eq));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!eqRepo.existsById(id)) return ResponseEntity.notFound().build();
-        eqRepo.deleteById(id);
+        if (!eqService.existsById(id)) return ResponseEntity.notFound().build();
+        eqService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

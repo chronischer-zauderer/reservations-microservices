@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Reservations - Demo UI</title>
+  <style>body{font-family:Arial;max-width:900px;margin:2rem auto;padding:1rem}label{display:block;margin-top:.5rem}</style>
+</head>
+<body>
+  <h1>Facilities</h1>
+  <div id="list"></div>
+
+  <h2>Añadir facility</h2>
+  <form id="form">
+    <label>Nombre <input id="name" required></label>
+    <label>Descripción <input id="description"></label>
+    <label>Capacidad <input id="capacity" type="number" value="5"></label>
+    <button type="submit">Crear</button>
+  </form>
+
+  <script>
+    const api = (p, opts) => fetch(`/api/${p}`, opts).then(r=>r.json().catch(()=>null));
+    async function refresh(){
+      const data = await api('facilities');
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      if(!data || !data.length) { list.innerHTML = '<i>No hay facilities</i>'; return }
+      data.forEach(f=>{
+        const el = document.createElement('div');
+        el.innerHTML = `<b>${f.name}</b> (${f.capacity}) — ${f.description}`;
+        list.appendChild(el);
+      })
+    }
+    document.getElementById('form').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const description = document.getElementById('description').value;
+      const capacity = parseInt(document.getElementById('capacity').value||'0',10);
+      await fetch('/api/facilities', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,description,capacity})});
+      document.getElementById('form').reset();
+      refresh();
+    });
+    refresh();
+  </script>
+</body>
+</html>
